@@ -36,13 +36,15 @@ def main():
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    st.image(result["local_path"], caption="Generated Funko Pop Image", use_container_width=True)
+                    # Display image directly from bytes
+                    st.image(result["image_bytes"], caption="Generated Funko Pop Image", use_container_width=True)
                 
                 # Generate QR code for the blob URL
-                qr_path = generate_qr_code(result["blob_url"])
+                qr_bytes = generate_qr_code(result["blob_url"])
                 
                 with col2:
-                    st.image(qr_path, caption="Scan QR Code to Download", use_container_width=True)
+                    # Display QR code directly from bytes
+                    st.image(qr_bytes, caption="Scan QR Code to Download", use_container_width=True)
                 
                 # Display the blob URL below the images
                 st.markdown(f"Or use this [direct link]({result['blob_url']})")

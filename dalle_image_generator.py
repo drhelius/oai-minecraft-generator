@@ -1,5 +1,6 @@
-import os
+import io
 import uuid
+import requests
 from openai_utils import OpenAIClient
 from blob_storage_client import BlobStorageClient
 
@@ -7,11 +8,6 @@ class DalleImageGenerator:
     def __init__(self, container_name="funko-images"):
         self.openai_client = OpenAIClient(model_id="dalle")
         self.blob_client = BlobStorageClient(container_name)
-        self.image_folder = "generated_images"
-        
-        # Create the image folder if it doesn't exist
-        if not os.path.exists(self.image_folder):
-            os.makedirs(self.image_folder)
     
     def generate_funko_image(self, description):
         """Generate a Funko-Pop style image from a text description."""
@@ -55,24 +51,24 @@ The image should be indistinguishable from an official Funko Pop product photo f
         # Get the image URL from the response
         image_url = response.data[0].url
         
-        # Generate a unique filename
+        # Download the image into memory
+        image_response = requests.get(image_url)
+        image_bytes = io.BytesIO(image_response.content)
+        
+        # Generate a unique filename for blob storage
         filename = f"funko_{uuid.uuid4().hex}.png"
-        local_path = os.path.join(self.image_folder, filename)
         
-        # Download the image locally
-        import requests
-        image_data = requests.get(image_url).content
-        with open(local_path, "wb") as f:
-            f.write(image_data)
-        
-        # Upload to blob storage
-        self.blob_client.upload_file(local_path, filename)
+        # Upload directly from memory to blob storage
+        self.blob_client.upload_bytes(image_bytes, filename)
         
         # Get the blob URL
         blob_url = self.blob_client.get_blob_url(filename)
         
+        # Reset the stream position to start for Streamlit to read
+        image_bytes.seek(0)
+        
         return {
-            "local_path": local_path,
+            "image_bytes": image_bytes,
             "blob_url": blob_url,
             "filename": filename
         }
