@@ -5,6 +5,8 @@ __pycache__/
 
 docs/
 temp_uploads/
+generated_images/
+qr_codes/
 
 # C extensions
 *.so

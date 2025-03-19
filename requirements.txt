@@ -1,0 +1,7 @@
+streamlit
+Pillow
+python-dotenv
+openai
+azure-storage-blob
+qrcode
+requests
