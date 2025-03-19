@@ -5,7 +5,7 @@ from openai_utils import OpenAIClient
 from blob_storage_client import BlobStorageClient
 
 class DalleImageGenerator:
-    def __init__(self, container_name="funko-images"):
+    def __init__(self, container_name="images"):
         self.openai_client = OpenAIClient(model_id="dalle")
         self.blob_client = BlobStorageClient(container_name)
     
