@@ -3,6 +3,7 @@ import os
 from dalle_image_generator import DalleImageGenerator
 from qr_code_generator import generate_qr_code
 from PIL import Image
+import pyperclip
 
 st.set_page_config(
     page_title="Funko Pop Generator",
@@ -17,6 +18,19 @@ def main():
     # Initialize the image generator
     image_generator = DalleImageGenerator()
     
+    # Store the last used description in session state
+    if 'last_description' not in st.session_state:
+        st.session_state.last_description = ""
+    
+    # Track if we should regenerate the image
+    if 'regenerate' not in st.session_state:
+        st.session_state.regenerate = False
+    
+    # Handle regeneration from previous run
+    if st.session_state.regenerate and st.session_state.last_description:
+        st.session_state.regenerate = False
+        generate_funko_image(st.session_state.last_description, image_generator)
+    
     # Use chat_input instead of form with text_area and button
     description = st.chat_input(
         placeholder="Example: Albert Einstein with crazy hair and a lab coat",
@@ -24,33 +38,49 @@ def main():
     
     # Process the input when user submits
     if description:
-        with st.spinner("Generating your Funko Pop image..."):
-            try:
-                # Generate the image
-                result = image_generator.generate_funko_image(description)
-                
-                # Display the generated image and QR code side by side
-                st.success("Image generated successfully!")
-                
-                # Create two columns for displaying images side by side
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    # Display image directly from bytes
-                    st.image(result["image_bytes"], caption="Generated Funko Pop Image", use_container_width=True)
-                
-                # Generate QR code for the blob URL
-                qr_bytes = generate_qr_code(result["blob_url"])
-                
-                with col2:
-                    # Display QR code directly from bytes
-                    st.image(qr_bytes, caption="Scan QR Code to Download", use_container_width=True)
-                
-                # Display the blob URL below the images
-                st.markdown(f"Or use this [direct link]({result['blob_url']})")
-                
-            except Exception as e:
-                st.error(f"Error generating image: {str(e)}")
+        # Copy the description to clipboard
+        try:
+            pyperclip.copy(description)
+        except Exception as e:
+            print(f"Could not copy to clipboard: {str(e)}")
+            
+        # Store the description in session state
+        st.session_state.last_description = description
+        
+        generate_funko_image(description, image_generator)
+    
+    # Generate Again button - only show if there's a previous description
+    if st.session_state.last_description:
+        if st.button("🔄 Generate Again with Same Prompt", use_container_width=True):
+            # Set flag to regenerate and trigger a rerun
+            st.session_state.regenerate = True
+            st.rerun()
+
+def generate_funko_image(description, image_generator):
+    with st.spinner("Generating your Funko Pop image..."):
+        try:
+            # Generate the image
+            result = image_generator.generate_funko_image(description)
+            
+            # Create two columns for displaying images side by side
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                # Display image directly from bytes
+                st.image(result["image_bytes"], caption="Generated Funko Pop Image", use_container_width=True)
+            
+            # Generate QR code for the blob URL
+            qr_bytes = generate_qr_code(result["blob_url"])
+            
+            with col2:
+                # Display QR code directly from bytes
+                st.image(qr_bytes, caption="Scan QR Code to Download", use_container_width=True)
+            
+            # Display the blob URL below the images
+            st.markdown(f"Or use this [direct link]({result['blob_url']})")
+            
+        except Exception as e:
+            st.error(f"Error generating image: {str(e)}")
 
 if __name__ == "__main__":
     main()
