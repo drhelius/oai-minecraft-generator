@@ -48,9 +48,11 @@ def main():
         st.session_state.last_description = description
         
         generate_funko_image(description, image_generator)
-    
+
     # Generate Again button - only show if there's a previous description
     if st.session_state.last_description:
+        st.text(" ")
+        st.text(" ")
         if st.button("🔄 Generate Again with Same Prompt", use_container_width=True):
             # Set flag to regenerate and trigger a rerun
             st.session_state.regenerate = True
@@ -66,18 +68,17 @@ def generate_funko_image(description, image_generator):
             col1, col2 = st.columns(2)
             
             with col1:
-                # Display image directly from bytes
-                st.image(result["image_bytes"], caption="Generated Funko Pop Image", use_container_width=True)
+                # Display image directly from bytes without caption
+                st.image(result["image_bytes"], use_container_width=True)
+                st.markdown("<div style='text-align: center;'>Generated Funko Pop Image</div>", unsafe_allow_html=True)
             
             # Generate QR code for the blob URL
             qr_bytes = generate_qr_code(result["blob_url"])
             
             with col2:
-                # Display QR code directly from bytes
-                st.image(qr_bytes, caption="Scan QR Code to Download", use_container_width=True)
-            
-            # Display the blob URL below the images
-            st.markdown(f"Or use this [direct link]({result['blob_url']})")
+                # Display QR code directly from bytes without caption
+                st.image(qr_bytes, use_container_width=True)
+                st.markdown(f"<div style='text-align: center;'>Scan QR Code or use this <a href='{result['blob_url']}' target='_blank'>direct link</a></div>", unsafe_allow_html=True)
             
         except Exception as e:
             st.error(f"Error generating image: {str(e)}")
