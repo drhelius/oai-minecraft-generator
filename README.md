@@ -1,10 +1,10 @@
-# 🎭 Funko Pop Generator
+# ⛏️ Minecraft Character Generator
 
-A web application that generates Funko Pop style images based on text descriptions using Azure OpenAI's DALL-E 3 model. The app also generates QR codes for easy sharing and downloads images to Azure Blob Storage.
+A web application that generates Minecraft-style character images based on text descriptions using Azure OpenAI's DALL-E 3 model. The app also generates QR codes for easy sharing and downloads images to Azure Blob Storage.
 
 ## 📋 Features
 
-- Generate Funko Pop style images from text descriptions
+- Generate Minecraft style character images from text descriptions
 - Automatic image storage in Azure Blob Storage
 - QR code generation for easy sharing
 - Simple, user-friendly Streamlit interface

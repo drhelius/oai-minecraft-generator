@@ -6,34 +6,52 @@ from PIL import Image
 import pyperclip
 
 st.set_page_config(
-    page_title="Funko Pop Generator",
-    page_icon="🎭",
+    page_title="Minecraft Character Generator",
+    page_icon="⛏️",
     layout="centered"
 )
 
 def main():
-    st.title("🎭 Funko Pop Image Generator")
-    st.write("Enter a description of a person and generate a Funko Pop style image!")
+    st.title("⛏️ Minecraft Character Generator")
+    st.write("Enter a description and generate a Minecraft-style character!")
     
     # Initialize the image generator
     image_generator = DalleImageGenerator()
     
-    # Store the last used description in session state
+    # Store the last used description and biome in session state
     if 'last_description' not in st.session_state:
         st.session_state.last_description = ""
+    
+    if 'last_biome' not in st.session_state:
+        st.session_state.last_biome = "Forest"
     
     # Track if we should regenerate the image
     if 'regenerate' not in st.session_state:
         st.session_state.regenerate = False
     
+    # List of Minecraft biomes
+    biomes = [
+        "Beach", "Desert", "Forest", "Jungle", 
+        "Plains", "River", "Savanna", "Snowy Slopes", "Swamp",
+        "Nether", "End"
+    ]
+    
+    # Add biome selection dropdown
+    # selected_biome = st.selectbox(
+    #     "Select background biome:",
+    #     biomes,
+    #     index=biomes.index(st.session_state.last_biome) if st.session_state.last_biome in biomes else 5  # Default to Plains
+    # )
+    selected_biome = "Forest"
+    
     # Handle regeneration from previous run
     if st.session_state.regenerate and st.session_state.last_description:
         st.session_state.regenerate = False
-        generate_funko_image(st.session_state.last_description, image_generator)
+        generate_minecraft_image(st.session_state.last_description, selected_biome, image_generator)
     
     # Use chat_input instead of form with text_area and button
     description = st.chat_input(
-        placeholder="Example: Albert Einstein with crazy hair and a lab coat",
+        placeholder="Example: A zombie warrior with diamond armor and enchanted sword",
     )
     
     # Process the input when user submits
@@ -44,10 +62,11 @@ def main():
         except Exception as e:
             print(f"Could not copy to clipboard: {str(e)}")
             
-        # Store the description in session state
+        # Store the description and biome in session state
         st.session_state.last_description = description
+        st.session_state.last_biome = selected_biome
         
-        generate_funko_image(description, image_generator)
+        generate_minecraft_image(description, selected_biome, image_generator)
 
     # Generate Again button - only show if there's a previous description
     if st.session_state.last_description:
@@ -58,11 +77,12 @@ def main():
             st.session_state.regenerate = True
             st.rerun()
 
-def generate_funko_image(description, image_generator):
-    with st.spinner("Generating your Funko Pop image..."):
+def generate_minecraft_image(description, biome, image_generator):
+    with st.spinner(f"Generating your Minecraft character..."):
+    #with st.spinner(f"Generating your Minecraft character in a {biome} biome..."):
         try:
             # Generate the image
-            result = image_generator.generate_funko_image(description)
+            result = image_generator.generate_minecraft_image(description, biome)
             
             # Create two columns for displaying images side by side
             col1, col2 = st.columns(2)
@@ -70,7 +90,7 @@ def generate_funko_image(description, image_generator):
             with col1:
                 # Display image directly from bytes without caption
                 st.image(result["image_bytes"], use_container_width=True)
-                st.markdown("<div style='text-align: center;'>Generated Funko Pop Image</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='text-align: center;'>Generated Minecraft Character</div>", unsafe_allow_html=True)
             
             # Generate QR code for the blob URL
             qr_bytes = generate_qr_code(result["blob_url"])
