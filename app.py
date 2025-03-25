@@ -1,10 +1,7 @@
 import streamlit as st
-import os
 from dalle_image_generator import DalleImageGenerator
 from qr_code_generator import generate_qr_code
-from PIL import Image
 import pyperclip
-import io
 from webcam_analyzer import WebcamAnalyzer
 
 st.set_page_config(
@@ -23,12 +20,9 @@ def main():
     # Initialize the webcam analyzer
     webcam_analyzer = WebcamAnalyzer()
     
-    # Store the last used description and biome in session state
+    # Store the last used description in session state
     if 'last_description' not in st.session_state:
         st.session_state.last_description = ""
-    
-    if 'last_biome' not in st.session_state:
-        st.session_state.last_biome = "Forest"
     
     # Track if we should regenerate the image
     if 'regenerate' not in st.session_state:
@@ -46,14 +40,11 @@ def main():
     if 'generating' not in st.session_state:
         st.session_state.generating = False
         
-    # Selected biome (simplified for now)
-    selected_biome = "Forest"
-    
     # Handle regeneration from previous run
     if st.session_state.regenerate and st.session_state.last_description:
         st.session_state.regenerate = False
         st.session_state.generating = True
-        generate_minecraft_image(st.session_state.last_description, selected_biome, image_generator)
+        generate_minecraft_image(st.session_state.last_description, image_generator)
         st.session_state.generating = False
     
     # Process webcam image if it exists in session state
@@ -83,7 +74,7 @@ def main():
                 print(f"Detected features: {features}")
             
             # Generate the Minecraft character
-            generate_minecraft_image(features, selected_biome, image_generator)
+            generate_minecraft_image(features, image_generator)
             
             # Clear the features message after generation is complete
             features_placeholder.empty()
@@ -124,15 +115,14 @@ def main():
             except Exception as e:
                 print(f"Could not copy to clipboard: {str(e)}")
                 
-            # Store the description and biome in session state
+            # Store the description in session state
             st.session_state.last_description = description
-            st.session_state.last_biome = selected_biome
             
             # Set generating flag
             st.session_state.generating = True
             
             # Generate image
-            generate_minecraft_image(description, selected_biome, image_generator)
+            generate_minecraft_image(description, image_generator)
             
             # Reset generating flag
             st.session_state.generating = False
@@ -163,11 +153,11 @@ def main():
             st.session_state.webcam_mode = True
             st.rerun()
 
-def generate_minecraft_image(description, biome, image_generator):
+def generate_minecraft_image(description, image_generator):
     with st.spinner(f"Generating your character..."):
         try:
             # Generate the image with frame included
-            result = image_generator.generate_minecraft_image(description, biome)
+            result = image_generator.generate_minecraft_image(description)
             
             # Create two columns for displaying images side by side
             col1, col2 = st.columns(2)
