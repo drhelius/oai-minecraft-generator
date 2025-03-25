@@ -4,6 +4,8 @@ from dalle_image_generator import DalleImageGenerator
 from qr_code_generator import generate_qr_code
 from PIL import Image
 import pyperclip
+import io
+from webcam_analyzer import WebcamAnalyzer
 
 st.set_page_config(
     page_title="Minecraft-style Character Generator",
@@ -13,10 +15,13 @@ st.set_page_config(
 
 def main():
     st.title("⛏️ Minecraft Character Generator")
-    st.write("Enter a description and generate a Minecraft-style character!")
+    st.write("Enter a description or use your webcam to generate a Minecraft-style character!")
     
     # Initialize the image generator
     image_generator = DalleImageGenerator()
+    
+    # Initialize the webcam analyzer
+    webcam_analyzer = WebcamAnalyzer()
     
     # Store the last used description and biome in session state
     if 'last_description' not in st.session_state:
@@ -29,25 +34,56 @@ def main():
     if 'regenerate' not in st.session_state:
         st.session_state.regenerate = False
     
-    # List of Minecraft biomes
-    biomes = [
-        "Beach", "Desert", "Forest", "Jungle", 
-        "Plains", "River", "Savanna", "Snowy Slopes", "Swamp",
-        "Nether", "End"
-    ]
+    # Track webcam image
+    if 'webcam_image' not in st.session_state:
+        st.session_state.webcam_image = None
     
-    # Add biome selection dropdown
-    # selected_biome = st.selectbox(
-    #     "Select background biome:",
-    #     biomes,
-    #     index=biomes.index(st.session_state.last_biome) if st.session_state.last_biome in biomes else 5  # Default to Plains
-    # )
+    # Track if we're in webcam capture mode
+    if 'webcam_mode' not in st.session_state:
+        st.session_state.webcam_mode = False
+        
+    # Selected biome (simplified for now)
     selected_biome = "Forest"
     
     # Handle regeneration from previous run
     if st.session_state.regenerate and st.session_state.last_description:
         st.session_state.regenerate = False
         generate_minecraft_image(st.session_state.last_description, selected_biome, image_generator)
+    
+    # Process webcam image if it exists in session state
+    if st.session_state.webcam_image is not None:
+        with st.spinner("Analyzing facial features..."):
+            try:
+                # Get image bytes from session state
+                image_bytes = st.session_state.webcam_image.getvalue()
+                
+                # Analyze the image
+                features = webcam_analyzer.analyze_face(image_bytes)
+                st.success(f"Detected features: {features}")
+                
+                # Use the features as the description
+                st.session_state.last_description = features
+                
+                # Generate the Minecraft character
+                generate_minecraft_image(features, selected_biome, image_generator)
+                
+                # Clear the webcam image from session state
+                st.session_state.webcam_image = None
+                st.session_state.webcam_mode = False
+            except Exception as e:
+                st.error(f"Error analyzing image: {str(e)}")
+                # Clear the webcam image from session state on error
+                st.session_state.webcam_image = None
+                st.session_state.webcam_mode = False
+    
+    # Show webcam capture if in webcam mode
+    if st.session_state.webcam_mode:
+        webcam_image = st.camera_input("Take a picture")
+        if webcam_image:
+            # Store the webcam image in session state
+            st.session_state.webcam_image = webcam_image
+            st.session_state.webcam_mode = False
+            st.rerun()  # Rerun to process the image
     
     # Use chat_input instead of form with text_area and button
     description = st.chat_input(
@@ -68,18 +104,28 @@ def main():
         
         generate_minecraft_image(description, selected_biome, image_generator)
 
-    # Generate Again button - only show if there's a previous description
-    if st.session_state.last_description:
-        st.text(" ")
-        st.text(" ")
-        if st.button("🔄 Generate Again with Same Prompt", use_container_width=True):
-            # Set flag to regenerate and trigger a rerun
-            st.session_state.regenerate = True
+    # Control buttons section
+    st.text(" ")
+    st.text(" ")
+    
+    # Create a row with two buttons
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.session_state.last_description:
+            if st.button("🔄 Generate Again with Same Prompt", use_container_width=True):
+                # Set flag to regenerate and trigger a rerun
+                st.session_state.regenerate = True
+                st.rerun()
+    
+    with col2:
+        if st.button("📷 Generate from Webcam", use_container_width=True):
+            # Set webcam mode and trigger rerun
+            st.session_state.webcam_mode = True
             st.rerun()
 
 def generate_minecraft_image(description, biome, image_generator):
     with st.spinner(f"Generating your character..."):
-    #with st.spinner(f"Generating your character in a {biome} biome..."):
         try:
             # Generate the image with frame included
             result = image_generator.generate_minecraft_image(description, biome)

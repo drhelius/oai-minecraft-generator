@@ -6,3 +6,4 @@ pyperclip
 requests
 python-dotenv
 azure-storage-blob
+azure-ai-inference
