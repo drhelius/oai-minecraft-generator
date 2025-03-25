@@ -1,8 +1,8 @@
 streamlit
-Pillow
-python-dotenv
+pillow
 openai
-azure-storage-blob
-qrcode
-requests
+qrcode[pil]
 pyperclip
+requests
+python-dotenv
+azure-storage-blob

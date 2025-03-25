@@ -1,15 +1,18 @@
 import io
 import uuid
 import requests
+import os
 from openai_utils import OpenAIClient
 from blob_storage_client import BlobStorageClient
+from image_frame_processor import ImageFrameProcessor
 
 class DalleImageGenerator:
     def __init__(self, container_name="minecraft"):
         self.openai_client = OpenAIClient(model_id="dalle")
         self.blob_client = BlobStorageClient(container_name)
+        self.frame_processor = ImageFrameProcessor()
     
-    def generate_minecraft_image(self, description, biome="Plains"):
+    def generate_minecraft_image(self, description, biome="Plains", add_frame=True, frame_path="frames/frame1.png"):
         """Generate a Minecraft style image from a text description in a specific biome."""
         client = self.openai_client.get_client()
         deployment_name = self.openai_client.deployment_name
@@ -33,6 +36,10 @@ class DalleImageGenerator:
         # Download the image into memory
         image_response = requests.get(image_url)
         image_bytes = io.BytesIO(image_response.content)
+        
+        # Apply frame if requested
+        if add_frame and os.path.exists(frame_path):
+            image_bytes = self.frame_processor.add_frame(image_bytes, frame_path)
         
         # Generate a unique filename for blob storage including the biome
         filename = f"minecraft_{biome.lower().replace(' ', '_')}_{uuid.uuid4().hex}.png"

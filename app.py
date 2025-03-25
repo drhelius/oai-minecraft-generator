@@ -6,13 +6,13 @@ from PIL import Image
 import pyperclip
 
 st.set_page_config(
-    page_title="Minecraft Character Generator",
+    page_title="Minecraft-style Character Generator",
     page_icon="⛏️",
     layout="centered"
 )
 
 def main():
-    st.title("⛏️ Minecraft Character Generator")
+    st.title("⛏️ Minecraft-style Character Generator")
     st.write("Enter a description and generate a Minecraft-style character!")
     
     # Initialize the image generator
@@ -78,10 +78,10 @@ def main():
             st.rerun()
 
 def generate_minecraft_image(description, biome, image_generator):
-    with st.spinner(f"Generating your Minecraft character..."):
-    #with st.spinner(f"Generating your Minecraft character in a {biome} biome..."):
+    with st.spinner(f"Generating your character..."):
+    #with st.spinner(f"Generating your character in a {biome} biome..."):
         try:
-            # Generate the image
+            # Generate the image with frame included
             result = image_generator.generate_minecraft_image(description, biome)
             
             # Create two columns for displaying images side by side
@@ -90,7 +90,7 @@ def generate_minecraft_image(description, biome, image_generator):
             with col1:
                 # Display image directly from bytes without caption
                 st.image(result["image_bytes"], use_container_width=True)
-                st.markdown(f"<div style='text-align: center;'>Generated Minecraft Character</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='text-align: center;'>Generated Character</div>", unsafe_allow_html=True)
             
             # Generate QR code for the blob URL
             qr_bytes = generate_qr_code(result["blob_url"])
