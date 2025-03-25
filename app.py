@@ -41,6 +41,10 @@ def main():
     # Track if we're in webcam capture mode
     if 'webcam_mode' not in st.session_state:
         st.session_state.webcam_mode = False
+    
+    # Track if generation is in progress
+    if 'generating' not in st.session_state:
+        st.session_state.generating = False
         
     # Selected biome (simplified for now)
     selected_biome = "Forest"
@@ -48,33 +52,54 @@ def main():
     # Handle regeneration from previous run
     if st.session_state.regenerate and st.session_state.last_description:
         st.session_state.regenerate = False
+        st.session_state.generating = True
         generate_minecraft_image(st.session_state.last_description, selected_biome, image_generator)
+        st.session_state.generating = False
     
     # Process webcam image if it exists in session state
     if st.session_state.webcam_image is not None:
-        with st.spinner("Analyzing facial features..."):
-            try:
-                # Get image bytes from session state
-                image_bytes = st.session_state.webcam_image.getvalue()
-                
+        try:
+            # Get image bytes from session state
+            image_bytes = st.session_state.webcam_image.getvalue()
+            
+            # Set generating flag to true
+            st.session_state.generating = True
+            
+            # Create a placeholder for features
+            features_placeholder = st.empty()
+            
+            # Show analyzing spinner
+            with st.spinner("Analyzing facial features..."):
                 # Analyze the image
                 features = webcam_analyzer.analyze_face(image_bytes)
-                st.success(f"Detected features: {features}")
+                
+                # Display features (will be removed later)
+                features_placeholder.success(f"Detected features: {features}")
                 
                 # Use the features as the description
                 st.session_state.last_description = features
                 
-                # Generate the Minecraft character
-                generate_minecraft_image(features, selected_biome, image_generator)
-                
-                # Clear the webcam image from session state
-                st.session_state.webcam_image = None
-                st.session_state.webcam_mode = False
-            except Exception as e:
-                st.error(f"Error analyzing image: {str(e)}")
-                # Clear the webcam image from session state on error
-                st.session_state.webcam_image = None
-                st.session_state.webcam_mode = False
+                # Log the features to console as well
+                print(f"Detected features: {features}")
+            
+            # Generate the Minecraft character
+            generate_minecraft_image(features, selected_biome, image_generator)
+            
+            # Clear the features message after generation is complete
+            features_placeholder.empty()
+            
+            # Reset generating flag
+            st.session_state.generating = False
+            
+            # Clear the webcam image from session state
+            st.session_state.webcam_image = None
+            st.session_state.webcam_mode = False
+        except Exception as e:
+            st.error(f"Error analyzing image: {str(e)}")
+            # Clear the webcam image from session state on error
+            st.session_state.webcam_image = None
+            st.session_state.webcam_mode = False
+            st.session_state.generating = False
     
     # Show webcam capture if in webcam mode
     if st.session_state.webcam_mode:
@@ -86,23 +111,31 @@ def main():
             st.rerun()  # Rerun to process the image
     
     # Use chat_input instead of form with text_area and button
-    description = st.chat_input(
-        placeholder="Example: A zombie warrior with diamond armor and enchanted sword",
-    )
-    
-    # Process the input when user submits
-    if description:
-        # Copy the description to clipboard
-        try:
-            pyperclip.copy(description)
-        except Exception as e:
-            print(f"Could not copy to clipboard: {str(e)}")
-            
-        # Store the description and biome in session state
-        st.session_state.last_description = description
-        st.session_state.last_biome = selected_biome
+    if not st.session_state.generating and not st.session_state.webcam_mode:
+        description = st.chat_input(
+            placeholder="Example: A zombie warrior with diamond armor and enchanted sword",
+        )
         
-        generate_minecraft_image(description, selected_biome, image_generator)
+        # Process the input when user submits
+        if description:
+            # Copy the description to clipboard
+            try:
+                pyperclip.copy(description)
+            except Exception as e:
+                print(f"Could not copy to clipboard: {str(e)}")
+                
+            # Store the description and biome in session state
+            st.session_state.last_description = description
+            st.session_state.last_biome = selected_biome
+            
+            # Set generating flag
+            st.session_state.generating = True
+            
+            # Generate image
+            generate_minecraft_image(description, selected_biome, image_generator)
+            
+            # Reset generating flag
+            st.session_state.generating = False
 
     # Control buttons section
     st.text(" ")
@@ -113,13 +146,19 @@ def main():
     
     with col1:
         if st.session_state.last_description:
-            if st.button("🔄 Generate Again with Same Prompt", use_container_width=True):
+            # Disable button during generation
+            if st.button("🔄 Generate Again with Same Prompt", 
+                       use_container_width=True,
+                       disabled=st.session_state.generating or st.session_state.webcam_mode):
                 # Set flag to regenerate and trigger a rerun
                 st.session_state.regenerate = True
                 st.rerun()
     
     with col2:
-        if st.button("📷 Generate from Webcam", use_container_width=True):
+        # Disable button during generation
+        if st.button("📷 Generate from Webcam", 
+                   use_container_width=True,
+                   disabled=st.session_state.generating or st.session_state.webcam_mode):
             # Set webcam mode and trigger rerun
             st.session_state.webcam_mode = True
             st.rerun()

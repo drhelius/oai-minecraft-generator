@@ -3,7 +3,6 @@ from azure.ai.inference import ChatCompletionsClient
 from azure.core.credentials import AzureKeyCredential
 import os
 from models_config import get_env_variable_keys
-import logging
 
 class WebcamAnalyzer:
     def __init__(self, model_id="mistral"):
@@ -19,21 +18,10 @@ class WebcamAnalyzer:
             missing = [key for key, val in env_keys.items() if not os.getenv(val)]
             raise ValueError(f"Missing environment variables: {', '.join(missing)}")
         
-        # Set up logging
-        logging.basicConfig(level=logging.INFO)
-        self.logger = logging.getLogger(__name__)
-    
     def analyze_face(self, image_bytes):
         """
         Analyze the facial features from a webcam image using Azure AI Inference API.
-        
-        Args:
-            image_bytes: The webcam image as bytes
-            
-        Returns:
-            A string description of the facial features
         """
-        self.logger.info(f"Creating client with endpoint: {self.endpoint}")
         # Create client with endpoint and key
         client = ChatCompletionsClient(
             endpoint=self.endpoint,
@@ -42,20 +30,31 @@ class WebcamAnalyzer:
         
         # Convert image to base64 for inclusion in the prompt
         image_b64 = base64.b64encode(image_bytes).decode('utf-8')
-        self.logger.info("Image converted to base64")
         
         # Prepare message for the model
         messages = [
             {
                 "role": "system", 
-                "content": "You are an AI assistant that analyzes facial features. Look at the provided image and list the key facial features that would be important for a Minecraft character. Return ONLY a comma-separated list of features without additional explanation. For example: 'blonde hair, blue eyes, beard, glasses, smiling'."
+                "content": """Analyze the provided photo of a person and extract:
+
+- Gender (e.g., boy, girl, man, woman, etc.)
+- Approximate age
+- Facial features (e.g., eye color, shape of eyes, nose, mouth, etc.)
+- Hair (e.g., color, length, style, etc.)
+- Skin tone
+- Any distinguishing marks (e.g., scars, birthmarks, tattoos, etc.)
+- Accessories (e.g., glasses, earrings, etc.)
+
+Your answer must be ONLY a single and concise comma separated list of features without additional explanation.
+
+If you don't find some of the features omit them in the answer: Don't say something like 'no visible marks'."""
             },
             {
                 "role": "user", 
                 "content": [
                     {
                         "type": "text", 
-                        "text": "Analyze this facial image and provide a comma-separated list of key features"
+                        "text": "Analyze this facial image"
                     },
                     {
                         "type": "image_url",
@@ -67,8 +66,6 @@ class WebcamAnalyzer:
             }
         ]
         
-        self.logger.info(f"Calling model with deployment name: {self.deployment_name}")
-        
         try:
             # Call the model
             response = client.complete(
@@ -79,12 +76,9 @@ class WebcamAnalyzer:
                 top_p=1.0
             )
             
-            self.logger.info(f"Received response from model: {response}")
-            
             # Return the description
             content = response.choices[0].message.content.strip()
-            self.logger.info(f"Extracted content: {content}")
             return content
         except Exception as e:
-            self.logger.error(f"Error calling Azure AI model: {str(e)}")
+            print(f"Error calling Azure AI model: {str(e)}")
             raise Exception(f"Error analyzing image: {str(e)}")
