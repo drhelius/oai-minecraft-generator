@@ -100,6 +100,11 @@ def main():
             st.session_state.webcam_image = webcam_image
             st.session_state.webcam_mode = False
             st.rerun()  # Rerun to process the image
+        
+        # Add cancel button below the webcam
+        if st.button("❌ Cancel", use_container_width=True):
+            st.session_state.webcam_mode = False
+            st.rerun()
     
     # Use chat_input instead of form with text_area and button
     if not st.session_state.generating and not st.session_state.webcam_mode:
