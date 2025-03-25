@@ -22,15 +22,32 @@ class ImageFrameProcessor:
         # Open the frame
         frame = Image.open(frame_path).convert("RGBA")
         
-        # Ensure the frame is the right size (same as base image)
-        if frame.size != base_image.size:
-            frame = frame.resize(base_image.size)
+        # Frame dimensions
+        frame_width, frame_height = 1705, 1705
+        hole_width, hole_height = 1400, 1400
         
-        # Composite the images (place frame on top of the base image)
-        composite = Image.alpha_composite(base_image, frame)
+        # Resize the frame to the expected dimensions if needed
+        if frame.size != (frame_width, frame_height):
+            frame = frame.resize((frame_width, frame_height))
         
-        # Convert back to RGB if needed
-        final_image = composite.convert("RGB")
+        # Resize the base image to fit the hole
+        base_image = base_image.resize((hole_width, hole_height))
+        
+        # Create a new blank image with frame dimensions
+        result = Image.new("RGBA", (frame_width, frame_height), (0, 0, 0, 0))
+        
+        # Calculate the position to paste the base image (centered in the frame)
+        x_offset = (frame_width - hole_width) // 2
+        y_offset = (frame_height - hole_height) // 2
+        
+        # Paste the base image onto the blank canvas
+        result.paste(base_image, (x_offset, y_offset))
+        
+        # Composite the frame over the base image
+        result = Image.alpha_composite(result, frame)
+        
+        # Convert back to RGB
+        final_image = result.convert("RGB")
         
         # Save the result to bytes
         result_bytes = io.BytesIO()
