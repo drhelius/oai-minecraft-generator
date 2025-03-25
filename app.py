@@ -12,7 +12,7 @@ st.set_page_config(
 )
 
 def main():
-    st.title("⛏️ Minecraft-style Character Generator")
+    st.title("⛏️ Minecraft Character Generator")
     st.write("Enter a description and generate a Minecraft-style character!")
     
     # Initialize the image generator
