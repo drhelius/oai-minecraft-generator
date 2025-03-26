@@ -47,7 +47,9 @@ class WebcamAnalyzer:
 
 Your answer must be ONLY a single and concise comma separated list of features without additional explanation.
 
-If you don't find some of the features omit them in the answer: Don't say something like 'no visible marks'."""
+If you don't find some of the features omit them in the answer: Don't say something like 'no visible marks'.
+
+You may encounter more than one person. Output the features of all of them separated by 'and'."""
             },
             {
                 "role": "user", 
