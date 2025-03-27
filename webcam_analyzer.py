@@ -37,7 +37,7 @@ class WebcamAnalyzer:
                 "role": "system", 
                 "content": """Analyze the provided photo of a person and extract:
 
-- Gender (e.g., boy, girl, man, woman, etc.)
+- Gender (choose boy or girl only)
 - Approximate age
 - Facial features (e.g., eye color, shape of eyes, nose, mouth, etc.)
 - Hair (e.g., color, length, style, etc.)
